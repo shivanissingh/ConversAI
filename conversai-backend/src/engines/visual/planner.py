@@ -49,36 +49,28 @@ GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 # Pollinations base URL
 POLLINATIONS_BASE = "https://image.pollinations.ai/prompt"
 
-IMAGE_PROMPT_SYSTEM = """You are a Visual Concept Artist for an AI educational platform.
+IMAGE_PROMPT_SYSTEM = """You are a visual director creating images for an educational explainer video.
 
-For each narration segment, generate a detailed, vivid image prompt that will be rendered by an AI image generator (Stable Diffusion).
+For each narration segment, create an image prompt that DIRECTLY illustrates what is being SAID in that specific segment - not the general topic, but the exact sentence or idea.
 
-The image should VISUALLY REPRESENT the concept being explained — NOT show text or diagrams.
+Rules:
+1. The image must show what the narration sentence is DESCRIBING, not just be related to the topic
+2. Be highly specific - include concrete visual elements that match the narration
+3. Photorealistic cinematic style, 16:9 format, dramatic lighting
+4. No text in images
+5. Think: "If I was making a documentary, what exact shot would play while this sentence is spoken?"
 
-Think like a documentary filmmaker: what single compelling visual would appear on screen while the narrator explains this?
+Return a JSON array. Each object must have:
+- segmentId: the segment id
+- imagePrompt: 2-3 sentence detailed scene description that specifically illustrates the narration text
+- headline: 4-6 word overlay text that captures the segment's main idea
+- style: one of "cinematic", "photorealistic", "3d_render", "illustration"
 
-OUTPUT FORMAT: Return a JSON array with one object per segment:
-{
-  "segmentId": "segment_1",
-  "imagePrompt": "A detailed, specific image prompt (2-3 sentences describing the scene)",
-  "style": "cinematic" | "infographic" | "photorealistic" | "3d_render" | "illustration",
-  "headline": "Short headline (5-7 words) that overlays the image"
-}
+Example: If narration says "Imagine two magic coins that always land on opposite sides no matter how far apart they are"
+Good prompt: "Two glowing golden coins floating in deep space, light years apart, one showing heads in warm gold light while simultaneously the other flips to tails in matching warm light, connected by visible quantum energy threads, photorealistic, dramatic space backdrop"
+Bad prompt: "Abstract quantum physics concept"
 
-IMAGE PROMPT RULES:
-1. Be SPECIFIC: describe the actual visual scene (colors, lighting, composition, subject)
-2. Be EDUCATIONAL: the image should help the viewer understand the concept
-3. Avoid text in images — use visual metaphors instead
-4. Use a consistent style that fits the topic (technical topics → clean 3D renders, nature → photorealistic, abstract → cinematic)
-5. Include lighting and mood: "cinematic golden hour", "soft studio lighting", "dark background with glowing elements"
-6. Each image should be DIFFERENT from the others — vary composition and perspective
-
-GOOD EXAMPLE: "A glowing neural network with interconnected nodes floating in a dark blue digital space, electric blue light trails connecting each node, representing machine learning pathways. Cinematic depth of field, 4K ultra-detailed."
-
-BAD EXAMPLE: "Machine learning diagram with boxes and arrows"
-
-FORBIDDEN: text, charts, graphs, screenshots, user interfaces, slide templates
-"""
+Focus on CONCRETE, SPECIFIC visualization of the exact sentence being narrated."""
 
 
 async def generate_image_prompts_via_gemini(
@@ -94,19 +86,34 @@ async def generate_image_prompts_via_gemini(
     concepts = metadata.get("concepts", [])
     difficulty = metadata.get("difficulty", "beginner")
 
-    segments_text = ""
+    # Build a structured list so Gemini receives the FULL narration text for each segment
+    segment_objects = []
     for i, seg in enumerate(segments):
-        segments_text += f"\nSegment {i+1} (segment_{i+1}):\n\"{seg.text}\"\n"
+        # Derive per-segment duration safely
+        duration = round(
+            (getattr(seg, "endTime", 0) or 0) - (getattr(seg, "startTime", 0) or 0),
+            1
+        )
+        segment_objects.append({
+            "segmentId": f"segment_{i + 1}",
+            "narrationText": seg.text,
+            "concept": concepts[i] if i < len(concepts) else (concepts[0] if concepts else "educational content"),
+            "segmentDuration": duration,
+        })
+
+    import json as _json
+    segments_json = _json.dumps(segment_objects, ensure_ascii=False, indent=2)
 
     user_prompt = f"""Generate image prompts for each narration segment below.
 
-TOPIC: {', '.join(concepts) if concepts else 'General educational content'}
+OVERALL TOPIC: {', '.join(concepts) if concepts else 'General educational content'}
 DIFFICULTY: {difficulty}
 NUMBER OF SEGMENTS: {len(segments)}
 
-SEGMENTS:
-{segments_text}
+SEGMENTS (each contains the EXACT narration text to visualize):
+{segments_json}
 
+For each segment, base the imagePrompt SPECIFICALLY on the narrationText field — visualize what is literally being said.
 Return a JSON array with exactly {len(segments)} objects.
 Return ONLY the JSON array. No additional text."""
 
@@ -115,8 +122,8 @@ Return ONLY the JSON array. No additional text."""
         "systemInstruction": {"parts": [{"text": IMAGE_PROMPT_SYSTEM}]},
         "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
         "generationConfig": {
-            "temperature": 0.85,
-            "topP": 0.9,
+            "temperature": 0.7,
+            "topP": 0.85,
             "responseMimeType": "application/json"
         }
     }
@@ -149,23 +156,8 @@ Return ONLY the JSON array. No additional text."""
                 encoded = urllib.parse.quote(full_prompt)
                 item["imageUrl"] = (
                     f"{POLLINATIONS_BASE}/{encoded}"
-                    f"?width=1280&height=720&seed={abs(hash(prompt)) % 9999}"
+                    f"?width=768&height=432&seed={abs(hash(prompt)) % 9999}"
                 )
-
-            # Pre-warm all Pollinations URLs concurrently
-            # This fires the image generation requests NOW (during audio synthesis)
-            # so images are ready/cached by the time the frontend renders them
-            logger.info(f"Pre-warming {len(image_data)} Pollinations image URLs...")
-            async def _prewarm(url: str) -> None:
-                try:
-                    async with httpx.AsyncClient(timeout=45.0) as c:
-                        await c.get(url)
-                except Exception:
-                    pass  # Pre-warming is best-effort
-
-            import asyncio
-            await asyncio.gather(*[_prewarm(item["imageUrl"]) for item in image_data], return_exceptions=True)
-            logger.info("Pre-warming complete — Pollinations images cached")
 
             return image_data
 
@@ -229,7 +221,7 @@ def _generate_fallback_prompts(segments: List[Segment]) -> List[dict]:
             "headline": f"Concept {i+1}",
             "imageUrl": (
                 f"{POLLINATIONS_BASE}/{encoded}"
-                f"?width=1280&height=720&seed={i * 42}"
+                f"?width=768&height=432&seed={i * 42}"
             )
         })
     return results

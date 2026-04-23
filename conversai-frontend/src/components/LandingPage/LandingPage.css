@@ -5,6 +5,15 @@
 .landing {
     min-height: 100vh;
     overflow-x: hidden;
+    position: relative; /* needed for absolute-positioned toggle */
+}
+
+/* Theme toggle pinned to top-right of the landing page */
+.landing__theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1.5rem;
+    z-index: 200;
 }
 
 /* =========================================================================

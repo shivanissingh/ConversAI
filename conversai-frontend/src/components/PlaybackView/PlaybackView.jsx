@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayback } from '../../hooks/usePlayback';
 import VisualDisplay from '../VisualDisplay/VisualDisplay.jsx';
-import DigitalHuman from '../DigitalHuman/DigitalHuman.jsx';
+import AvatarComponent from '../Avatar/AvatarComponent.jsx';
 import Controls from '../Controls/Controls.jsx';
 import { generateFollowUp } from '../../services/api';
 import './PlaybackView.css';
@@ -138,20 +138,18 @@ function PlaybackView({ response, onBack, onFollowUpResponse }) {
                     />
                 </motion.div>
 
-                {/* DigitalHuman Avatar — TalkingHead.js 3D with lip-sync */}
-                {hasAvatar && (
-                    <motion.div
-                        className="playback-view__avatar-container"
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 }}
-                    >
-                        <DigitalHuman
-                            audioBase64={response?.audio}
-                            isPlaying={isPlaying}
-                        />
-                    </motion.div>
-                )}
+                {/* Lottie Avatar — always visible, switches speaking/idle animation */}
+                <motion.div
+                    className="playback-view__avatar-container"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                >
+                    <AvatarComponent
+                        isSpeaking={isPlaying}
+                        intensity={avatarIntensity || 'medium'}
+                    />
+                </motion.div>
             </div>
 
             {/* Controls */}

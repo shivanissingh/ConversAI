@@ -6,14 +6,15 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
 }
 
 /* 16:9 Image Container */
 .visual-display__image-wrapper {
     position: relative;
     width: 100%;
-    max-width: 1200px;
+    max-width: 920px;
+    max-height: 54vh;          /* tall enough to fill space, leaves room for controls */
     margin: 0 auto;
     aspect-ratio: 16 / 9;
     border-radius: var(--radius-lg);
@@ -199,21 +200,21 @@
    ========================================================================= */
 .visual-display__text-panel {
     width: 100%;
-    max-width: 1200px;
+    max-width: 860px;
     margin: 0 auto;
-    padding: var(--spacing-lg) var(--spacing-xl);
+    padding: var(--spacing-md) var(--spacing-lg);
     background: var(--color-bg-glass);
     backdrop-filter: blur(10px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    min-height: 60px;
+    min-height: 48px;
     display: flex;
     align-items: center;
 }
 
 .visual-display__segment-text {
     font-family: var(--font-display);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-base);
     font-weight: var(--font-weight-normal);
     line-height: var(--line-height-relaxed);
     color: var(--color-text-primary);

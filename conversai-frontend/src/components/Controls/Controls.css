@@ -1,7 +1,7 @@
 .controls {
     position: relative;
     width: 100%;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-sm) var(--spacing-lg);
 }
 
 .controls__container {

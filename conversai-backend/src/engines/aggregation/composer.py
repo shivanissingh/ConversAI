@@ -3,14 +3,15 @@ Composer Module - Core Orchestration Logic
 
 This module implements the complete aggregation flow:
 1. Call Explanation Engine (FAIL-CRITICAL)
-2. Call Visual Engine (FAIL-SOFT)
-3. Call Voice & Avatar Engine (FAIL-CRITICAL)
-4. Compose unified response
-5. Validate timing integrity
+2. Call Visual Engine + Voice & Avatar Engine IN PARALLEL (FAIL-SOFT / FAIL-CRITICAL)
+3. Compose unified response
+4. Validate timing integrity
 
-Sequential execution only (NO parallelism for V1).
+Visual and Voice both depend only on Explanation output, so they run
+concurrently via asyncio.gather() to minimise total wall-clock time.
 """
 
+import asyncio
 import time
 from typing import Optional, Dict, List
 from src.shared.types import Segment, Duration
@@ -91,6 +92,7 @@ async def orchestrate_aggregation(
     # ========================================================================
     # STEP 1: Orchestrate Explanation Engine (CRITICAL)
     # ========================================================================
+    t0 = time.time()
     logger.info("STEP 1: Calling Explanation Engine...")
     try:
         explanation_start = time.time()
@@ -106,6 +108,8 @@ async def orchestrate_aggregation(
             f"{len(segments)} segments, "
             f"estimated duration: {explanation_metadata['estimatedDuration']:.1f}s"
         )
+        t1 = time.time()
+        logger.info(f"⏱  Explanation: {t1 - t0:.1f}s")
         
         # Capture explanation data for observability
         observability_data["explanation"] = {
@@ -149,36 +153,65 @@ async def orchestrate_aggregation(
         )
     
     # ========================================================================
-    # STEP 2: Orchestrate Visual Engine (OPTIONAL - FAIL-SOFT)
+    # STEP 2+3: Visual Engine + Voice & Avatar Engine — run IN PARALLEL
+    # Both only need explanation output, so there is no dependency between them.
     # ========================================================================
-    logger.info("STEP 2: Calling Visual Engine...")
-    visual_output = None
-    visuals = []
-    visual_failures = []
-    
-    try:
-        visual_start = time.time()
-        visual_output = await generate_visuals(
+    logger.info("STEP 2+3: Launching Visual Engine and Voice & Avatar Engine in parallel...")
+
+    visual_task = asyncio.create_task(
+        generate_visuals(segments=segments, metadata=explanation_metadata)
+    )
+    voice_task = asyncio.create_task(
+        synthesize_audio_and_avatar(
+            narration=narration,
+            avatar_enabled=avatar_enabled,
             segments=segments,
             metadata=explanation_metadata
         )
-        visual_time = (time.time() - visual_start) * 1000
-        
+    )
+
+    raw_visual, raw_voice = await asyncio.gather(
+        visual_task, voice_task, return_exceptions=True
+    )
+
+    t2 = time.time()
+    logger.info(
+        f"⏱  Visual+Voice parallel: {t2 - t1:.1f}s | "
+        f"Total so far: {t2 - t0:.1f}s"
+    )
+
+    # --- Visual Engine result (FAIL-SOFT) ---
+    visuals = []
+    visual_failures = []
+    visual_output = None
+
+    if isinstance(raw_visual, Exception):
+        logger.warning(f"⚠ Visual Engine failed (non-critical): {raw_visual}")
+        visual_failures = [{
+            "component": "visual_engine",
+            "segmentId": None,
+            "reason": str(raw_visual),
+            "isCritical": False
+        }]
+        observability_data["visual"] = {
+            "images": [],
+            "timings": {"total_time_ms": 0},
+            "failures": visual_failures
+        }
+    else:
+        visual_output = raw_visual
         visuals = visual_output.get("visuals", [])
         visual_stats = visual_output.get("metadata", {})
-        
+        visual_failures = collect_failures(visual_output)
+
         logger.info(
             f"✓ Visual Engine completed: "
             f"{visual_stats.get('totalGenerated', 0)}/{visual_stats.get('totalRequested', 0)} "
             f"visuals generated"
         )
-        
-        # Collect failures (if any)
-        visual_failures = collect_failures(visual_output)
         if visual_failures:
             logger.warning(f"Visual Engine had {len(visual_failures)} failures (non-critical)")
-        
-        # Capture visual data for observability
+
         observability_data["visual"] = {
             "images": [
                 {
@@ -189,74 +222,24 @@ async def orchestrate_aggregation(
                 for idx, v in enumerate(visuals)
             ],
             "timings": {
-                "total_time_ms": visual_time,
+                "total_time_ms": (t2 - t1) * 1000,
                 "total_requested": visual_stats.get("totalRequested", 0),
                 "total_generated": visual_stats.get("totalGenerated", 0)
             },
             "failures": visual_failures
         }
-        
-    except Exception as e:
-        logger.warning(f"⚠ Visual Engine failed (non-critical): {e}")
-        visuals = []
-        visual_failures = [{
-            "component": "visual_engine",
-            "segmentId": None,
-            "reason": str(e),
-            "isCritical": False
-        }]
-        
-        # Capture visual failure for observability
-        observability_data["visual"] = {
-            "images": [],
-            "timings": {"total_time_ms": 0},
-            "failures": visual_failures
-        }
-    
-    # ========================================================================
-    # STEP 3: Orchestrate Voice & Avatar Engine (CRITICAL)
-    # ========================================================================
-    logger.info("STEP 3: Calling Voice & Avatar Engine...")
-    try:
-        voice_start = time.time()
-        voice_output = await synthesize_audio_and_avatar(
-            narration=narration,
-            avatar_enabled=avatar_enabled,
-            segments=segments,
-            metadata=explanation_metadata
-        )
-        voice_time = (time.time() - voice_start) * 1000
-        
-        logger.info(
-            f"✓ Voice & Avatar Engine succeeded: "
-            f"audio duration: {voice_output['duration']:.1f}s, "
-            f"avatar: {voice_output.get('avatar') is not None}"
-        )
-        
-        # Capture voice data for observability
-        avatar_data = voice_output.get("avatar")
-        observability_data["voice"] = {
-            "audio_base64": voice_output["audio"],
-            "duration": voice_output["duration"],
-            "avatar_states": avatar_data.get("states", []) if avatar_data else [],
-            "avatar_cues": avatar_data.get("cues", []) if avatar_data else [],
-            "timings": {
-                "total_time_ms": voice_time
-            }
-        }
-        
-    except Exception as e:
-        logger.error(f"✗ Voice & Avatar Engine FAILED: {e}")
-        
-        # Record failure for observability
+
+    # --- Voice & Avatar Engine result (FAIL-CRITICAL) ---
+    if isinstance(raw_voice, Exception):
+        logger.error(f"✗ Voice & Avatar Engine FAILED: {raw_voice}")
+
         observability_data["failures"].append({
             "component": "voice",
             "segment_id": None,
-            "reason": str(e),
+            "reason": str(raw_voice),
             "critical": True
         })
-        
-        # Attempt to record failed run
+
         try:
             record_run({
                 "status": "failed",
@@ -265,12 +248,30 @@ async def orchestrate_aggregation(
             })
         except:
             pass  # Silent fail on observability
-        
+
         raise AggregationError(
-            f"Critical component 'voice' failed: {e}",
+            f"Critical component 'voice' failed: {raw_voice}",
             component="voice",
-            original_error=e
+            original_error=raw_voice
         )
+
+    voice_output = raw_voice
+    logger.info(
+        f"✓ Voice & Avatar Engine succeeded: "
+        f"audio duration: {voice_output['duration']:.1f}s, "
+        f"avatar: {voice_output.get('avatar') is not None}"
+    )
+
+    avatar_data = voice_output.get("avatar")
+    observability_data["voice"] = {
+        "audio_base64": voice_output["audio"],
+        "duration": voice_output["duration"],
+        "avatar_states": avatar_data.get("states", []) if avatar_data else [],
+        "avatar_cues": avatar_data.get("cues", []) if avatar_data else [],
+        "timings": {
+            "total_time_ms": (t2 - t1) * 1000
+        }
+    }
     
     # ========================================================================
     # STEP 4: Compose Unified Response

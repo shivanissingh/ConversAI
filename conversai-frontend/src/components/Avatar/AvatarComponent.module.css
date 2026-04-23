@@ -1,0 +1,121 @@
+/* AvatarComponent.module.css */
+
+/*
+ * Glassmorphism card — dark mode default, light mode overrides at the bottom.
+ * The translucent background + backdrop-blur lets the page colour bleed through,
+ * creating a 3D "floating panel" feel without being a stark opaque box.
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 14px 12px;
+
+  background: rgba(15, 12, 35, 0.55);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-radius: 20px;
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  box-shadow:
+    0 2px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.4) inset,
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 0 24px rgba(139, 92, 246, 0.10);
+  width: 190px;
+}
+
+/* Circular Lottie window */
+.avatarWrapper {
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(139, 92, 246, 0.40);
+  box-shadow:
+    0 0 16px rgba(139, 92, 246, 0.18) inset,
+    0 0 8px rgba(139, 92, 246, 0.12);
+  background: rgba(30, 27, 75, 0.60);
+  flex-shrink: 0;
+}
+
+/* Soundwave bars */
+.soundwave {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 24px;
+  margin-top: 2px;
+}
+
+.bar {
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(to top, #3b82f6, #8b5cf6);
+  border-radius: 3px;
+  transition: height 0.15s ease;
+}
+
+.barActive {
+  animation: soundwave linear infinite;
+}
+
+@keyframes soundwave {
+  0%, 100% { height: 4px; }
+  50%       { height: 20px; }
+}
+
+/* Status text */
+.status {
+  min-height: 18px;
+}
+
+.speaking {
+  color: #4ade80;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.idle {
+  color: rgba(148, 163, 184, 0.55);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* ── Light mode overrides ────────────────────────────────────────────────
+   Applied when ThemeProvider sets data-theme="light" on <html>.
+   :global() escapes the CSS module scope so the selector targets the
+   document root rather than a scoped class.
+   ──────────────────────────────────────────────────────────────────────── */
+
+:global([data-theme="light"]) .container {
+  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(139, 92, 246, 0.18);
+  box-shadow:
+    0 2px 0 0 rgba(255, 255, 255, 0.95) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.05) inset,
+    0 6px 24px rgba(0, 0, 0, 0.09),
+    0 0 18px rgba(139, 92, 246, 0.06);
+}
+
+:global([data-theme="light"]) .avatarWrapper {
+  background: rgba(238, 236, 255, 0.70);
+  border-color: rgba(139, 92, 246, 0.28);
+  box-shadow:
+    0 0 12px rgba(139, 92, 246, 0.10) inset,
+    0 0 6px rgba(139, 92, 246, 0.07);
+}
+
+:global([data-theme="light"]) .bar {
+  background: linear-gradient(to top, #6d28d9, #8b5cf6);
+}
+
+:global([data-theme="light"]) .speaking {
+  color: #16a34a;
+}
+
+:global([data-theme="light"]) .idle {
+  color: rgba(71, 85, 105, 0.60);
+}

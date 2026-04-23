@@ -5,6 +5,7 @@ import {
     MonitorPlay, Smartphone, Clock, CheckCircle2,
     ArrowRight
 } from 'lucide-react';
+import ThemeToggle from '../ThemeToggle/ThemeToggle.jsx';
 import './LandingPage.css';
 
 /**
@@ -14,6 +15,11 @@ import './LandingPage.css';
 function LandingPage({ onGetStarted }) {
     return (
         <div className="landing">
+            {/* Theme toggle — top-right, above all content */}
+            <div className="landing__theme-toggle">
+                <ThemeToggle />
+            </div>
+
             {/* Hero */}
             <section className="landing__hero">
                 <motion.div

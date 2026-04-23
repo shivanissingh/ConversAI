@@ -1,29 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Image, Loader2, AlertCircle } from 'lucide-react';
+import { Image, AlertCircle } from 'lucide-react';
 import './VisualDisplay.css';
 
 /**
  * VisualDisplay Component
- * Renders Pollinations.ai AI-generated images with headline overlay.
+ * Renders AI-generated images (delivered as base64 data URIs from the backend).
  *
- * Key behavior:
- *  - Shows shimmer while Pollinations generates the image (can take 5-30s on first load)
- *  - Retries up to 3 times if image fails (network hiccup, generation timeout)
- *  - Shows headline overlay once image is loaded
- *  - Pre-loads the next segment's image in background
+ * Because images arrive as embedded base64 strings, they load immediately
+ * without any network round-trip to Pollinations — no retry logic needed.
  */
 function VisualDisplay({ visual, segmentText, segmentIndex, allVisuals }) {
-    // Pre-load next segment's image in background for smooth transitions
-    useEffect(() => {
-        if (!allVisuals) return;
-        const nextVisual = allVisuals[segmentIndex + 1];
-        if (nextVisual?.url) {
-            const img = new window.Image();
-            img.src = nextVisual.url;
-        }
-    }, [segmentIndex, allVisuals]);
-
     return (
         <div className="visual-display">
             <div className="visual-display__image-wrapper">
@@ -72,46 +59,19 @@ function VisualDisplay({ visual, segmentText, segmentIndex, allVisuals }) {
 }
 
 /**
- * ImagePanel — renders a single AI-generated image with retry logic.
- * Pollinations.ai can take 5-30s on first generation, so we show
- * an animated shimmer and retry on failure.
+ * ImagePanel — renders a single base64-embedded image.
+ * No retry logic is needed because the image data is already fully embedded
+ * by the backend before the response is returned to the frontend.
  */
 function ImagePanel({ visual, segmentIndex }) {
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
-    const [retryCount, setRetryCount] = useState(0);
-    const [imgSrc, setImgSrc] = useState(visual.url);
-    const MAX_RETRIES = 3;
-    const retryTimerRef = useRef(null);
 
     // Reset state when visual changes (new segment)
     useEffect(() => {
         setLoaded(false);
         setError(false);
-        setRetryCount(0);
-        setImgSrc(visual.url);
     }, [visual.url]);
-
-    // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-        };
-    }, []);
-
-    const handleError = () => {
-        if (retryCount < MAX_RETRIES) {
-            // Retry with cache-busting after a delay
-            const delay = (retryCount + 1) * 3000; // 3s, 6s, 9s
-            retryTimerRef.current = setTimeout(() => {
-                const cacheBust = `&_retry=${retryCount + 1}&_t=${Date.now()}`;
-                setImgSrc(visual.url + cacheBust);
-                setRetryCount(prev => prev + 1);
-            }, delay);
-        } else {
-            setError(true);
-        }
-    };
 
     return (
         <motion.div
@@ -121,26 +81,7 @@ function ImagePanel({ visual, segmentIndex }) {
             exit={{ opacity: 0, scale: 1.02 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
         >
-            {/* Loading shimmer — visible while image is generating */}
-            {!loaded && !error && (
-                <div className="visual-display__loading-shimmer">
-                    <Loader2
-                        className="visual-display__loading-icon"
-                        size={32}
-                        strokeWidth={1.5}
-                    />
-                    <span className="visual-display__loading-text">
-                        {retryCount > 0
-                            ? `Generating visual... (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`
-                            : 'Generating visual...'}
-                    </span>
-                    <span className="visual-display__loading-subtext">
-                        AI images take 5–30 seconds on first generation
-                    </span>
-                </div>
-            )}
-
-            {/* Error state — shown after all retries exhausted */}
+            {/* Error state */}
             {error && (
                 <div className="visual-display__error-state">
                     <div className="visual-display__error-fallback"
@@ -161,12 +102,11 @@ function ImagePanel({ visual, segmentIndex }) {
             {/* Actual image — always rendered (hidden until loaded) */}
             {!error && (
                 <img
-                    src={imgSrc}
+                    src={visual.url}
                     alt={visual.headline || 'Visual explanation'}
                     className={`visual-display__image ${loaded ? 'visual-display__image--loaded' : ''}`}
                     onLoad={() => setLoaded(true)}
-                    onError={handleError}
-                    crossOrigin="anonymous"
+                    onError={() => setError(true)}
                     loading="eager"
                 />
             )}

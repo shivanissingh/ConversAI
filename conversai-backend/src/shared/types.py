@@ -68,6 +68,13 @@ class FollowUpRequest(BaseModel):
     duration: Duration = Field(default=Duration.SHORT)
     avatarEnabled: bool = Field(default=True)
 
+class TopicRequest(BaseModel):
+    topic: str = Field(..., min_length=5, max_length=200, description="Topic or question to explain, e.g. 'Explain quantum computing'")
+    duration: Duration = Field(default=Duration.MEDIUM)
+    instruction: Optional[str] = Field(None, max_length=200, description="Custom instruction, e.g., 'Like I'm 5'")
+    avatarEnabled: bool = Field(default=True)
+
+
 class ExplainResponse(BaseModel):
     audio: str = Field(..., description="Base64 encoded audio or URL")
     visuals: List[Visual]

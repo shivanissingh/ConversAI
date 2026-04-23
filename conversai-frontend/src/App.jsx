@@ -8,7 +8,7 @@ import LoadingView from './components/LoadingView/LoadingView.jsx';
 import PlaybackView from './components/PlaybackView/PlaybackView.jsx';
 import ErrorView from './components/ErrorView/ErrorView.jsx';
 import HistoryView from './components/HistoryView/HistoryView.jsx';
-import { generateExplanation } from './services/api';
+import { generateExplanation, generateTopicExplanation } from './services/api';
 import { saveToHistory } from './utils/history';
 import './App.css';
 
@@ -62,18 +62,29 @@ function App() {
     setAppState(STATES.INPUT);
   };
 
+  const handleGoHome = () => {
+    setAppState(STATES.LANDING);
+    setResponse(null);
+    setError(null);
+  };
+
   const handleSubmit = async (data) => {
     setLastRequest(data);
     setAppState(STATES.LOADING);
     setError(null);
 
     try {
-      const result = await generateExplanation(data);
+      // Route to topic endpoint or text endpoint based on mode
+      const result = data.mode === 'topic'
+        ? await generateTopicExplanation(data)
+        : await generateExplanation(data);
+
       setResponse(result);
       setAppState(STATES.PLAYBACK);
 
-      // Save to history
-      saveToHistory(result, data.text);
+      // Save to history — use topic or text as the label
+      const historyLabel = data.mode === 'topic' ? data.topic : data.text;
+      saveToHistory(result, historyLabel);
     } catch (err) {
       console.error('Generation failed:', err);
       setError(err);
@@ -123,6 +134,7 @@ function App() {
           <Navbar
             onNewExplanation={handleNewExplanation}
             onHistory={handleShowHistory}
+            onGoHome={handleGoHome}
             showNewExplanation={showNewExplanation}
           />
         )}

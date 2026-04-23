@@ -5,9 +5,9 @@ import './Navbar.css';
 /**
  * Navbar Component
  * Shared sticky navigation bar for all views (Home, Playback, History).
- * Features: Larger logo, navigation buttons, theme toggle.
+ * Features: Clickable logo (→ landing), navigation buttons, theme toggle.
  */
-function Navbar({ onNewExplanation, onHistory, showNewExplanation = false }) {
+function Navbar({ onNewExplanation, onHistory, onGoHome, showNewExplanation = false }) {
     return (
         <motion.nav
             className="navbar"
@@ -16,10 +16,15 @@ function Navbar({ onNewExplanation, onHistory, showNewExplanation = false }) {
             transition={{ duration: 0.3 }}
         >
             <div className="navbar__container">
-                {/* Logo - Larger and more prominent */}
-                <div className="navbar__logo">
+                {/* Logo — click to go back to landing page */}
+                <button
+                    className="navbar__logo navbar__logo--btn"
+                    onClick={onGoHome}
+                    aria-label="Go to home"
+                    title="Back to home"
+                >
                     <span className="text-gradient">ConversAI</span>
-                </div>
+                </button>
 
                 {/* Navigation Actions */}
                 <div className="navbar__actions">
@@ -52,7 +57,7 @@ function Navbar({ onNewExplanation, onHistory, showNewExplanation = false }) {
                     </button>
                 </div>
 
-                {/* Theme Toggle - Always visible on right */}
+                {/* Theme Toggle — always visible on the right */}
                 <div className="navbar__theme">
                     <ThemeToggle />
                 </div>
