@@ -1,0 +1,119 @@
+/* =========================================================================
+   Digital Human — TalkingHead.js 3D Avatar
+   ========================================================================= */
+
+.digital-human {
+    position: relative;
+    width: 180px;
+    height: 240px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(124, 58, 237, 0.15);
+}
+
+/* Three.js canvas */
+.digital-human__canvas {
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+.digital-human__canvas--visible {
+    opacity: 1;
+}
+
+/* Canvas should fill the container */
+.digital-human__canvas canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Loading overlay */
+.digital-human__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--color-bg-elevated);
+}
+
+.digital-human__overlay--error {
+    background: var(--color-bg-secondary);
+}
+
+/* Placeholder silhouette */
+.digital-human__avatar-placeholder {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(124, 58, 237, 0.1);
+    border: 2px dashed rgba(124, 58, 237, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.digital-human__placeholder-icon {
+    color: var(--color-primary-light);
+    opacity: 0.6;
+}
+
+/* Loading info */
+.digital-human__loading-info {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+}
+
+.digital-human__spinner {
+    animation: spin 1.5s linear infinite;
+    color: var(--color-primary-light);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Progress bar */
+.digital-human__progress-bar {
+    width: 100%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.digital-human__progress-fill {
+    height: 100%;
+    background: var(--color-primary-gradient);
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+}
+
+/* Error state */
+.digital-human__error-icon {
+    color: var(--color-text-muted);
+}
+
+.digital-human__error-text {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .digital-human {
+        width: 140px;
+        height: 185px;
+    }
+}

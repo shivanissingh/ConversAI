@@ -1,0 +1,91 @@
+.error-view {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    background: var(--color-bg-primary);
+}
+
+.error-view__card {
+    max-width: 400px;
+    width: 100%;
+    padding: var(--spacing-2xl);
+    background: var(--color-bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-2xl);
+    text-align: center;
+}
+
+.error-view__icon {
+    font-size: 48px;
+    margin-bottom: var(--spacing-lg);
+}
+
+.error-view__title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.error-view__message {
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--spacing-xl);
+}
+
+.error-view__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.error-view__button {
+    width: 100%;
+    height: 48px;
+    padding: 0 var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-display);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.error-view__button--primary {
+    background: var(--color-primary-gradient);
+    border: none;
+    color: white;
+    box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+.error-view__button--primary:hover {
+    box-shadow: var(--shadow-lg), var(--shadow-glow-strong);
+}
+
+.error-view__button--secondary {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.error-view__button--secondary:hover {
+    border-color: var(--color-border-hover);
+    color: var(--color-text-primary);
+    background: var(--color-bg-elevated);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .error-view {
+        padding: var(--spacing-md);
+    }
+
+    .error-view__card {
+        padding: var(--spacing-xl);
+    }
+}

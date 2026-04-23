@@ -1,0 +1,223 @@
+.controls {
+    position: relative;
+    width: 100%;
+    padding: var(--spacing-lg);
+}
+
+.controls__container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--color-bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+}
+
+/* Progress Bar */
+.controls__progress-container {
+    width: 100%;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 0;
+}
+
+.controls__progress-track {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    background: var(--color-border-hover);
+    border-radius: var(--radius-full);
+    overflow: visible;
+}
+
+.controls__progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--color-primary-gradient);
+    border-radius: var(--radius-full);
+    transition: width 0.1s linear;
+}
+
+.controls__progress-handle {
+    position: absolute;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: var(--shadow-md);
+    transition: transform 0.1s ease;
+    cursor: grab;
+}
+
+.controls__progress-handle:active {
+    cursor: grabbing;
+}
+
+.controls__progress-container:hover .controls__progress-track {
+    height: 6px;
+}
+
+.controls__progress-container:hover .controls__progress-handle {
+    width: 16px;
+    height: 16px;
+}
+
+/* Time Display */
+.controls__time {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.controls__time-current {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.controls__time-separator {
+    color: var(--color-text-muted);
+}
+
+.controls__time-total {
+    color: var(--color-text-muted);
+}
+
+/* Playback Speed */
+.controls__speed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.controls__speed-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.controls__speed-options {
+    display: flex;
+    gap: 4px;
+}
+
+.controls__speed-option {
+    padding: 4px 10px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.controls__speed-option:hover {
+    border-color: var(--color-border-hover);
+    color: var(--color-text-primary);
+}
+
+.controls__speed-option--active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* Buttons */
+.controls__buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+}
+
+.controls__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.controls__button--primary {
+    width: 56px;
+    height: 56px;
+    background: var(--color-primary-gradient);
+    color: white;
+    box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+.controls__button--primary:hover {
+    box-shadow: var(--shadow-lg), var(--shadow-glow-strong);
+}
+
+.controls__button--secondary {
+    width: 44px;
+    height: 44px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.controls__button--secondary:hover {
+    background: var(--color-bg-glass);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-hover);
+}
+
+.controls__icon {
+    width: 24px;
+    height: 24px;
+}
+
+.controls__button--secondary .controls__icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .controls {
+        padding: var(--spacing-md);
+    }
+
+    .controls__container {
+        padding: var(--spacing-md);
+    }
+
+    .controls__button--primary {
+        width: 48px;
+        height: 48px;
+    }
+
+    .controls__button--secondary {
+        width: 40px;
+        height: 40px;
+    }
+
+    .controls__icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .controls__button--secondary .controls__icon {
+        width: 18px;
+        height: 18px;
+    }
+}

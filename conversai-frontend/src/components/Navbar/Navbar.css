@@ -1,0 +1,94 @@
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--navbar-height);
+    z-index: 100;
+    background: var(--color-bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.navbar__container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 var(--spacing-xl);
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: var(--spacing-lg);
+}
+
+/* Logo - Larger and more prominent */
+.navbar__logo {
+    font-family: var(--font-display);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+}
+
+/* Navigation Actions */
+.navbar__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex: 1;
+    justify-content: center;
+}
+
+.navbar__button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.navbar__button:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-border-hover);
+    background: var(--color-bg-glass);
+    transform: translateY(-1px);
+}
+
+.navbar__button svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Theme Toggle Container */
+.navbar__theme {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar__container {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .navbar__logo {
+        font-size: var(--font-size-xl);
+    }
+
+    .navbar__button span {
+        display: none;
+    }
+
+    .navbar__button {
+        padding: var(--spacing-sm);
+    }
+}

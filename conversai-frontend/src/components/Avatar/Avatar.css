@@ -1,0 +1,36 @@
+.avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar__orb-container {
+    position: relative;
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* SVG Orb Styling */
+.avatar__svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 8px 24px rgba(124, 58, 237, 0.4));
+}
+
+/* Responsive Sizing */
+@media (max-width: 768px) {
+    .avatar__orb-container {
+        width: calc(var(--avatar-size) * 0.8);
+        height: calc(var(--avatar-size) * 0.8);
+    }
+}
+
+@media (max-width: 480px) {
+    .avatar__orb-container {
+        width: calc(var(--avatar-size) * 0.6);
+        height: calc(var(--avatar-size) * 0.6);
+    }
+}

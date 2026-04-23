@@ -1,0 +1,207 @@
+.loading-view {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-primary);
+    z-index: var(--z-modal);
+    overflow: hidden;
+}
+
+/* Animated Background */
+.loading-view__background {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 50% 50%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(167, 139, 250, 0.1) 0%, transparent 40%),
+        radial-gradient(ellipse at 20% 80%, rgba(91, 33, 182, 0.1) 0%, transparent 40%);
+    animation: backgroundPulse 8s ease-in-out infinite;
+}
+
+@keyframes backgroundPulse {
+
+    0%,
+    100% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+/* Floating Particles */
+.loading-view__particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--color-primary-light);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--color-primary-light);
+}
+
+/* Central Orb */
+.loading-view__orb-container {
+    position: relative;
+    margin-bottom: var(--spacing-3xl);
+}
+
+.loading-view__orb {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-view__orb-inner {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: var(--color-primary-gradient);
+    border-radius: 50%;
+    box-shadow:
+        0 0 40px rgba(124, 58, 237, 0.5),
+        0 0 80px rgba(124, 58, 237, 0.3),
+        inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.loading-view__orb-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 2px solid transparent;
+    border-top-color: var(--color-primary-light);
+    border-right-color: var(--color-primary);
+    border-radius: 50%;
+    opacity: 0.6;
+}
+
+.loading-view__orb-ring--secondary {
+    width: 85%;
+    height: 85%;
+    border-top-color: rgba(167, 139, 250, 0.5);
+    border-right-color: transparent;
+    border-bottom-color: rgba(124, 58, 237, 0.5);
+    opacity: 0.4;
+}
+
+/* Pipeline Steps */
+.loading-view__pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    z-index: 1;
+    min-width: 320px;
+    max-width: 420px;
+}
+
+.loading-view__step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-lg);
+    transition: all 0.3s ease;
+}
+
+.loading-view__step--done {
+    opacity: 0.6;
+}
+
+.loading-view__step--active {
+    background: rgba(124, 58, 237, 0.08);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.loading-view__step--pending {
+    opacity: 0.3;
+}
+
+.loading-view__step-indicator {
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.loading-view__step--pending .loading-view__step-indicator {
+    font-size: 0.6rem;
+    color: var(--color-text-muted);
+}
+
+.loading-view__step-text {
+    font-family: var(--font-display);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.loading-view__step--pending .loading-view__step-text {
+    color: var(--color-text-muted);
+}
+
+.loading-view__step-dots {
+    color: var(--color-primary-light);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.loading-view__step-done-icon {
+    color: var(--color-accent-success);
+}
+
+.loading-view__step-icon-svg {
+    color: var(--color-text-muted);
+}
+
+.loading-view__step--active .loading-view__step-icon-svg {
+    color: var(--color-primary-light);
+}
+
+/* Hint / Timer */
+.loading-view__hint {
+    position: absolute;
+    bottom: var(--spacing-2xl);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    z-index: 1;
+}
+
+.loading-view__timer {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary-light);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .loading-view__orb {
+        width: 100px;
+        height: 100px;
+    }
+
+    .loading-view__orb-inner {
+        width: 50px;
+        height: 50px;
+    }
+
+    .loading-view__text {
+        font-size: var(--font-size-lg);
+    }
+}
