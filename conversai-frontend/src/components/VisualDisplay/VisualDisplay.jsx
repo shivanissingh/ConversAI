@@ -66,11 +66,21 @@ function VisualDisplay({ visual, segmentText, segmentIndex, allVisuals }) {
 function ImagePanel({ visual, segmentIndex }) {
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
+    const imgRef = useRef(null);
 
     // Reset state when visual changes (new segment)
+    // For base64 data URIs, the browser may decode the image synchronously
+    // before React attaches onLoad — so we also check img.complete after mount.
     useEffect(() => {
         setLoaded(false);
         setError(false);
+
+        const raf = requestAnimationFrame(() => {
+            if (imgRef.current?.complete && imgRef.current?.naturalWidth > 0) {
+                setLoaded(true);
+            }
+        });
+        return () => cancelAnimationFrame(raf);
     }, [visual.url]);
 
     return (
@@ -102,6 +112,7 @@ function ImagePanel({ visual, segmentIndex }) {
             {/* Actual image — always rendered (hidden until loaded) */}
             {!error && (
                 <img
+                    ref={imgRef}
                     src={visual.url}
                     alt={visual.headline || 'Visual explanation'}
                     className={`visual-display__image ${loaded ? 'visual-display__image--loaded' : ''}`}
