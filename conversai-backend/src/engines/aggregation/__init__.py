@@ -117,9 +117,9 @@ async def aggregate(
         if not isinstance(instruction, str):
             raise ValidationError("Instruction must be a string")
         
-        if len(instruction) > 200:
+        if len(instruction) > 2000:
             raise ValidationError(
-                f"Instruction too long: {len(instruction)} chars (maximum: 200)"
+                f"Instruction too long: {len(instruction)} chars (maximum: 2000)"
             )
     
     # Validate avatar_enabled

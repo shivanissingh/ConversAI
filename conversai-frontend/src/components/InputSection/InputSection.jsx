@@ -270,7 +270,7 @@ function InputSection({ onSubmit, isLoading }) {
                                     value={topic}
                                     onChange={(e) => setTopic(e.target.value)}
                                     disabled={isLoading}
-                                    maxLength={200}
+                                    maxLength={2000}
                                     autoFocus
                                 />
 
@@ -363,7 +363,7 @@ function InputSection({ onSubmit, isLoading }) {
                                         value={instruction}
                                         onChange={(e) => setInstruction(e.target.value)}
                                         disabled={isLoading}
-                                        maxLength={200}
+                                        maxLength={2000}
                                     />
                                 </motion.div>
                             )}

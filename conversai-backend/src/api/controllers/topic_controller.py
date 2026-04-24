@@ -140,10 +140,10 @@ class TopicController:
                 status_code=400,
                 detail="Topic must be at least 5 characters after trimming whitespace.",
             )
-        if len(topic) > 200:
+        if len(topic) > 2000:
             raise HTTPException(
                 status_code=400,
-                detail="Topic must be 200 characters or fewer.",
+                detail="Topic must be 2000 characters or fewer.",
             )
 
         logger.info(
