@@ -76,7 +76,7 @@ function HistoryView({ onRestore, onBack }) {
                         <p className="history-view__empty-text">
                             Your recent explanations will appear here.
                             <br />
-                            History is stored for 1 hour.
+                            History is stored for 2 days.
                         </p>
                     </motion.div>
                 ) : (

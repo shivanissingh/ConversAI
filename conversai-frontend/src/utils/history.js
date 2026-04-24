@@ -4,7 +4,7 @@
  */
 
 const STORAGE_KEY = 'conversai_history';
-const TTL_MS = 60 * 60 * 1000; // 1 hour
+const TTL_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
 const MAX_ENTRIES = 5;
 
 /**
