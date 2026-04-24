@@ -55,9 +55,9 @@ async def _download_image_as_base64(
         _TransientError   - timeout / connection error (first attempt only)
     """
     try:
-        # Pollinations generates images on-the-fly — at 768×432 this typically
-        # takes 5-15s, so 40s is a generous upper bound.
-        response = await session.get(url, timeout=40.0, follow_redirects=True)
+        # Pollinations generates images on-the-fly — complex prompts at 768×432
+        # can take 50-70s to render. 90s gives ample headroom.
+        response = await session.get(url, timeout=90.0, follow_redirects=True)
         if response.status_code == 200:
             image_bytes = response.content
             encoded = base64.b64encode(image_bytes).decode("utf-8")
@@ -226,23 +226,24 @@ async def generate_visuals_async(visual_plans: List[dict], segments, metadata: d
         # Sequential download with inter-request gap + retry on 429/timeout
         #
         # Pollinations free tier:
-        #   - Generates images on-the-fly (first request can take 40-50s)
+        #   - Generates images on-the-fly (complex prompts can take 50-70s)
         #   - Rate-limits concurrent / rapid-fire bursts to 429
         #
-        # Strategy: send requests one-at-a-time with a 3s gap between them.
-        # On 429 or timeout, wait 5s and retry once.  This gives Pollinations
-        # enough breathing room to avoid triggering the rate limiter while
-        # keeping total added overhead around 6-9s (3s × 2-3 gaps).
+        # Strategy: download ONE image at a time with a 10s cooldown gap.
+        # Per-request timeout is 90s to let Pollinations finish rendering.
+        # On 429 or timeout, wait 10s and retry once.
         # ------------------------------------------------------------------
-        INTER_REQUEST_DELAY = 2.0   # seconds between sequential requests
-        RETRY_DELAY         = 3.0   # seconds to wait before a retry
+        INTER_REQUEST_DELAY   = 10.0  # seconds between sequential requests
+        RETRY_DELAY_429       = 10.0  # seconds to wait before retry on 429 rate limit
+        RETRY_DELAY_TRANSIENT = 10.0  # seconds to wait before retry on timeout/connection error
 
-        logger.info(f"Downloading {len(download_items)} images sequentially ({INTER_REQUEST_DELAY}s gap, retry on 429/timeout)…")
+        logger.info(f"Downloading {len(download_items)} images sequentially ({INTER_REQUEST_DELAY}s gap, 90s timeout per image)…")
         base64_results: list[str | Exception | None] = []
 
-        async with httpx.AsyncClient(timeout=45.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             for idx, item in enumerate(download_items):
                 if idx > 0:
+                    logger.info(f"  Waiting {INTER_REQUEST_DELAY}s before next image request...")
                     await asyncio.sleep(INTER_REQUEST_DELAY)
 
                 url = item["url"]
@@ -250,16 +251,27 @@ async def generate_visuals_async(visual_plans: List[dict], segments, metadata: d
                     base64_results.append(None)
                     continue
 
+                logger.info(f"Downloading image {idx+1}/{len(download_items)} for {item['plan']['segmentId']}")
+
                 try:
                     result = await _download_image_as_base64(url, client)
                     base64_results.append(result)
-                except (_RateLimitError, _TransientError) as first_err:
-                    # 429 or timeout on first attempt — back off and retry once
-                    err_type = "429" if isinstance(first_err, _RateLimitError) else "timeout/connection"
+                except _RateLimitError as first_err:
                     logger.warning(
-                        f"  Segment {idx+1}: {err_type} received, retrying after {RETRY_DELAY}s…"
+                        f"  Segment {idx+1}: 429 rate limit, waiting {RETRY_DELAY_429}s before retry..."
                     )
-                    await asyncio.sleep(RETRY_DELAY)
+                    await asyncio.sleep(RETRY_DELAY_429)
+                    try:
+                        result = await _download_image_as_base64(url, client, is_retry=True)
+                        base64_results.append(result)
+                    except Exception as retry_err:
+                        logger.warning(f"  Segment {idx+1}: retry also failed: {retry_err}")
+                        base64_results.append(None)
+                except _TransientError as first_err:
+                    logger.warning(
+                        f"  Segment {idx+1}: timeout/connection error, retrying after {RETRY_DELAY_TRANSIENT}s..."
+                    )
+                    await asyncio.sleep(RETRY_DELAY_TRANSIENT)
                     try:
                         result = await _download_image_as_base64(url, client, is_retry=True)
                         base64_results.append(result)
@@ -270,7 +282,11 @@ async def generate_visuals_async(visual_plans: List[dict], segments, metadata: d
                     base64_results.append(exc)
 
         download_time = time.time() - start_time - prompt_time
-        logger.info(f"Image downloads completed in {download_time:.2f}s")
+        successful_downloads = sum(1 for r in base64_results if isinstance(r, str) and r is not None)
+        logger.info(
+            f"Image downloads completed: {successful_downloads}/{len(download_items)} succeeded "
+            f"in {download_time:.2f}s"
+        )
 
         # Assemble visuals — fall back to SVG placeholder on any failure
         for item, result in zip(download_items, base64_results):
