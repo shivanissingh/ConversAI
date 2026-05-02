@@ -27,7 +27,7 @@ def get_connection() -> sqlite3.Connection:
     Returns:
         SQLite connection with WAL mode and foreign keys enabled
     """
-    conn = sqlite3.connect(str(DB_PATH))
+    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False, timeout=10.0)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     conn.row_factory = sqlite3.Row  # Enable column access by name
@@ -79,6 +79,26 @@ def initialize_database():
             )
         """)
         
+        # Schema migration: Add new structured and timing columns if they don't exist
+        new_columns = [
+            ("explanation_time_ms", "REAL"),
+            ("visual_time_ms", "REAL"),
+            ("voice_time_ms", "REAL"),
+            ("aggregation_time_ms", "REAL"),
+            ("user_input_text", "TEXT"),
+            ("narration_text", "TEXT"),
+            ("segment_count", "INTEGER"),
+            ("visual_count", "INTEGER")
+        ]
+        for col_name, col_type in new_columns:
+            try:
+                conn.execute(f"ALTER TABLE explanation_runs ADD COLUMN {col_name} {col_type}")
+            except sqlite3.OperationalError as e:
+                # Ignore duplicate column errors, meaning the column already exists
+                if "duplicate column name" not in str(e).lower():
+                    raise e
+        
+        
         # Create run counter table for human-readable sequential IDs
         # CHANGE 1: Human-Readable Run IDs
         # This table maintains a monotonically increasing counter
@@ -105,6 +125,12 @@ def initialize_database():
         conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_status 
             ON explanation_runs(status)
+        """)
+        
+        # Add index for total_time_ms to improve performance queries
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_total_time_ms 
+            ON explanation_runs(total_time_ms)
         """)
 
 

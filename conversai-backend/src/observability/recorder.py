@@ -42,6 +42,18 @@ def _process_artifact(
         ArtifactReference dict with preview, hash, and local path
     """
     try:
+        write_artifacts = os.getenv("OBSERVABILITY_ARTIFACTS", "true").lower() == "true"
+        
+        # Fast path if artifacts are disabled (skip heavy base64 decode and file IO)
+        if not write_artifacts:
+            return {
+                "preview_base64": truncate_base64(base64_string, max_chars=400),
+                "sha256": None,  # Proper NULL value instead of placeholder string
+                "local_path": None,  # Explicitly None to prevent invalid paths
+                "size_bytes": int(len(base64_string) * 0.75),  # Approximate size
+                "metadata": metadata or {}
+            }
+            
         # Decode base64 to bytes
         content_bytes = decode_base64_to_bytes(base64_string)
         
@@ -223,6 +235,7 @@ def record_run(run_data: Dict[str, Any]) -> bool:
         run_data: Dict with keys:
             - status: "success" | "partial" | "failed"
             - total_time_ms: float
+            - timings: Optional Dict containing explicit engine timings
             - payload: Dict with user_input, explanation, visual, voice, metrics, failures
             
     Returns:
@@ -230,6 +243,9 @@ def record_run(run_data: Dict[str, Any]) -> bool:
         
     CRITICAL: This function NEVER raises exceptions. It logs warnings on failure.
     """
+    if os.getenv("OBSERVABILITY_ENABLED", "true").lower() == "false":
+        return False
+
     try:
         # Validate input
         if not validate_run_data(run_data):
@@ -272,14 +288,50 @@ def record_run(run_data: Dict[str, Any]) -> bool:
         # Serialize payload to JSON
         payload_json = safe_json_dumps(processed_payload)
         
+        # Extract new structured columns
+        user_input_text = payload.get("user_input", {}).get("text")
+        narration_text = payload.get("explanation", {}).get("narration")
+        segments = payload.get("explanation", {}).get("segments", [])
+        segment_count = len(segments) if segments else 0
+        visual_count = payload.get("visual", {}).get("timings", {}).get("total_generated", 0)
+        
+        # Explicit timing extraction (backward compatible defaults to None)
+        timings = run_data.get("timings", {})
+        explanation_time_ms = timings.get("explanation_time_ms")
+        visual_time_ms = timings.get("visual_time_ms")
+        voice_time_ms = timings.get("voice_time_ms")
+        aggregation_time_ms = timings.get("aggregation_time_ms")
+        
+        # Timing consistency validation (safely treating None as 0 for calculation only)
+        exp_val = explanation_time_ms if explanation_time_ms is not None else 0
+        vis_val = visual_time_ms if visual_time_ms is not None else 0
+        voice_val = voice_time_ms if voice_time_ms is not None else 0
+        agg_val = aggregation_time_ms if aggregation_time_ms is not None else 0
+        
+        expected_total_time = exp_val + max(vis_val, voice_val) + agg_val
+        
+        if abs(total_time_ms - expected_total_time) > 5.0:  # Allow 5ms deviation
+            logger.warning(
+                f"Timing validation deviation: total_time_ms ({total_time_ms:.1f}) deviates from "
+                f"expected components sum ({expected_total_time:.1f}). This is logged for tracking."
+            )
+        
         # Insert into database
         with get_transaction() as conn:
             conn.execute(
                 """
-                INSERT INTO explanation_runs (run_id, created_at, status, total_time_ms, payload_json)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO explanation_runs (
+                    run_id, created_at, status, total_time_ms, payload_json,
+                    explanation_time_ms, visual_time_ms, voice_time_ms, aggregation_time_ms,
+                    user_input_text, narration_text, segment_count, visual_count
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (run_id, created_at, status, total_time_ms, payload_json)
+                (
+                    run_id, created_at, status, total_time_ms, payload_json,
+                    explanation_time_ms, visual_time_ms, voice_time_ms, aggregation_time_ms,
+                    user_input_text, narration_text, segment_count, visual_count
+                )
             )
         
         logger.info(f"Observability: Recorded run {run_id} (status={status}, time={total_time_ms:.1f}ms)")

@@ -89,6 +89,10 @@ async def orchestrate_aggregation(
     logger.info(f"Avatar enabled: {avatar_enabled}")
     logger.info("="* 60)
     
+    status = "failed"
+    
+    try:
+    
     # ========================================================================
     # STEP 1: Orchestrate Explanation Engine (CRITICAL)
     # ========================================================================
@@ -136,15 +140,11 @@ async def orchestrate_aggregation(
             "critical": True
         })
         
-        # Attempt to record failed run
-        try:
-            record_run({
-                "status": "failed",
-                "total_time_ms": (time.time() - start_time) * 1000,
-                "payload": observability_data
-            })
-        except:
-            pass  # Silent fail on observability
+        # Compute available explanation time up to failure
+        if 'explanation_start' in locals():
+            observability_data["explanation"] = {
+                "timings": {"total_time_ms": (time.time() - explanation_start) * 1000}
+            }
         
         raise AggregationError(
             f"Critical component 'explanation' failed: {e}",
@@ -240,14 +240,10 @@ async def orchestrate_aggregation(
             "critical": True
         })
 
-        try:
-            record_run({
-                "status": "failed",
-                "total_time_ms": (time.time() - start_time) * 1000,
-                "payload": observability_data
-            })
-        except:
-            pass  # Silent fail on observability
+        if 't1' in locals():
+            observability_data["voice"] = {
+                "timings": {"total_time_ms": (time.time() - t1) * 1000}
+            }
 
         raise AggregationError(
             f"Critical component 'voice' failed: {raw_voice}",
@@ -313,16 +309,7 @@ async def orchestrate_aggregation(
     # Add visual failures to main failures list
     observability_data["failures"].extend(visual_failures)
     
-    # Record observability data (non-blocking, never crashes)
-    try:
-        status = "success" if total_visuals_generated > 0 else "partial"
-        record_run({
-            "status": status,
-            "total_time_ms": total_time * 1000,
-            "payload": observability_data
-        })
-    except Exception as obs_error:
-        logger.warning(f"Failed to record observability data: {obs_error}")
+    status = "success" if total_visuals_generated > 0 else "partial"
     
     unified_output = {
         "narration": narration,
@@ -355,3 +342,40 @@ async def orchestrate_aggregation(
     logger.info("=" * 60)
     
     return unified_output
+
+    except Exception as e:
+        # Status remains "failed"
+        raise
+    
+    finally:
+        # Ensure only one record is written per request
+        total_time_ms_final = (time.time() - start_time) * 1000
+        
+        # Calculate distinct aggregation time (excluding parallel engine time)
+        exp_time = observability_data.get("explanation", {}).get("timings", {}).get("total_time_ms")
+        vis_time = observability_data.get("visual", {}).get("timings", {}).get("total_time_ms")
+        voice_time = observability_data.get("voice", {}).get("timings", {}).get("total_time_ms")
+        
+        # Use local variables for arithmetic to avoid overwriting None with 0 in the DB
+        exp_calc = exp_time if exp_time is not None else 0
+        vis_calc = vis_time if vis_time is not None else 0
+        voice_calc = voice_time if voice_time is not None else 0
+        
+        # Visual and voice run in parallel, so we subtract max
+        max_parallel_time = max(vis_calc, voice_calc)
+        aggregation_time_ms = max(0.0, total_time_ms_final - exp_calc - max_parallel_time)
+        
+        try:
+            record_run({
+                "status": status,
+                "total_time_ms": total_time_ms_final,
+                "timings": {
+                    "explanation_time_ms": exp_time,
+                    "visual_time_ms": vis_time,
+                    "voice_time_ms": voice_time,
+                    "aggregation_time_ms": aggregation_time_ms
+                },
+                "payload": observability_data
+            })
+        except Exception as obs_error:
+            logger.warning(f"Failed to record final observability data: {obs_error}")
