@@ -5,12 +5,12 @@ import './LoadingView.css';
 
 // Pipeline steps that mirror the actual backend execution
 const PIPELINE_STEPS = [
-    { id: 'analyze', text: 'Analyzing your content', Icon: BookOpen, duration: 45000 },
-    { id: 'explain', text: 'Crafting story-driven narration', Icon: PenLine, duration: 45000 },
-    { id: 'visuals', text: 'Generating AI visuals', Icon: Image, duration: 45000 },
-    { id: 'voice', text: 'Synthesizing natural voice', Icon: Mic, duration: 45000 },
-    { id: 'sync', text: 'Synchronizing all components', Icon: Layers, duration: 45000 },
-    { id: 'ready', text: 'Preparing your experience', Icon: Sparkles, duration: 45000 },
+    { id: 'analyze', text: 'Analyzing your content', Icon: BookOpen, duration: 50000 },
+    { id: 'explain', text: 'Crafting story-driven narration', Icon: PenLine, duration: 50000 },
+    { id: 'visuals', text: 'Generating AI visuals', Icon: Image, duration: 50000 },
+    { id: 'voice', text: 'Synthesizing natural voice', Icon: Mic, duration: 50000 },
+    { id: 'sync', text: 'Synchronizing all components', Icon: Layers, duration: 50000 },
+    { id: 'ready', text: 'Preparing your experience', Icon: Sparkles, duration: 50000 },
 ];
 
 /**
@@ -128,8 +128,8 @@ function LoadingView() {
                             transition={{ delay: i * 0.1 }}
                         >
                             <span className="loading-view__step-indicator">
-                                {status === 'done' 
-                                    ? <CheckCircle2 size={18} className="loading-view__step-done-icon" /> 
+                                {status === 'done'
+                                    ? <CheckCircle2 size={18} className="loading-view__step-done-icon" />
                                     : <Icon size={18} className="loading-view__step-icon-svg" />}
                             </span>
                             <span className="loading-view__step-text">{step.text}</span>
@@ -154,7 +154,7 @@ function LoadingView() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
             >
-                <span className="loading-view__timer">{elapsed}s</span> elapsed • Usually takes 240-300 seconds
+                <span className="loading-view__timer">{elapsed}s</span> elapsed • Usually takes 300-360 seconds
             </motion.p>
         </div>
     );
