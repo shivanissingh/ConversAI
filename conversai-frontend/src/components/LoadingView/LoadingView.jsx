@@ -5,12 +5,12 @@ import './LoadingView.css';
 
 // Pipeline steps that mirror the actual backend execution
 const PIPELINE_STEPS = [
-    { id: 'analyze', text: 'Analyzing your content', Icon: BookOpen, duration: 3000 },
-    { id: 'explain', text: 'Crafting story-driven narration', Icon: PenLine, duration: 12000 },
-    { id: 'visuals', text: 'Generating AI visuals', Icon: Image, duration: 8000 },
-    { id: 'voice', text: 'Synthesizing natural voice', Icon: Mic, duration: 6000 },
-    { id: 'sync', text: 'Synchronizing all components', Icon: Layers, duration: 3000 },
-    { id: 'ready', text: 'Preparing your experience', Icon: Sparkles, duration: 2000 },
+    { id: 'analyze', text: 'Analyzing your content', Icon: BookOpen, duration: 45000 },
+    { id: 'explain', text: 'Crafting story-driven narration', Icon: PenLine, duration: 45000 },
+    { id: 'visuals', text: 'Generating AI visuals', Icon: Image, duration: 45000 },
+    { id: 'voice', text: 'Synthesizing natural voice', Icon: Mic, duration: 45000 },
+    { id: 'sync', text: 'Synchronizing all components', Icon: Layers, duration: 45000 },
+    { id: 'ready', text: 'Preparing your experience', Icon: Sparkles, duration: 45000 },
 ];
 
 /**
@@ -154,7 +154,7 @@ function LoadingView() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
             >
-                <span className="loading-view__timer">{elapsed}s</span> elapsed • Usually takes 30-60 seconds
+                <span className="loading-view__timer">{elapsed}s</span> elapsed • Usually takes 240-300 seconds
             </motion.p>
         </div>
     );
