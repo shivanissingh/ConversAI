@@ -128,7 +128,7 @@ conversai-backend/
 - ❌ Implement authentication
 - ❌ Call AI models directly
 
-**Technology:** React + Vite, Vanilla CSS (CSS Variables), Framer Motion, Lucide React, HTML5 Audio API, TalkingHead.js (Three.js WebGL)
+**Technology:** React + Vite, Vanilla CSS (CSS Variables), Framer Motion, Lucide React, HTML5 Audio API, Lottie-React (2D Avatar Animation)
 
 ---
 
@@ -214,20 +214,20 @@ conversai-backend/
 - ❌ Generate narration text
 - ❌ Generate visuals (non-avatar)
 - ❌ Decide explanation structure
-- ❌ Render the 3D avatar (frontend responsibility via TalkingHead.js)
+- ❌ Render the Lottie avatar (frontend responsibility via lottie-react)
 
 **Internal Components:**
 - `tts.py` - Text-to-speech via edge-tts (`en-US-AriaNeural`), base64 MP3 output
 - `avatar.py` - Lightweight avatar state metadata (speaking/idle, intensity per segment)
 
-**Frontend Avatar (TalkingHead.js):**
-- A React `DigitalHuman` component loads TalkingHead.js (Three.js WebGL)
-- Loads a Ready Player Me GLB avatar model
-- Drives real-time lip-sync via `head.speakAudio(audioArrayBuffer)`
-- All 3D rendering happens in the browser, not the backend
+**Frontend Avatar (Lottie):**
+- A React `DigitalHuman` or `Avatar` component loads Lottie JSON files using `lottie-react`
+- Loads two distinct Lottie animations: one for 'speaking' and one for 'idle'
+- Triggers 'speaking' or 'idle' based on the audio playback state
+- All rendering happens in the browser via standard SVG/Canvas Lottie rendering
 
 **Technology (Backend):** edge-tts (Microsoft Neural TTS, free, no API key)  
-**Technology (Frontend):** TalkingHead.js (`@met4citizen/talkinghead`), Three.js, Ready Player Me GLB
+**Technology (Frontend):** `lottie-react`, Lottie JSON files
 
 ---
 
@@ -487,7 +487,7 @@ UI displays user-friendly error message
 | **LLM** | Google Gemini (`gemini-2.0-flash-preview`) | Free tier, fast, multimodal capable |
 | **Image Generation** | Pollinations.ai (`image.pollinations.ai`) | Free, no API key, CDN-cached, 1280×720 |
 | **Text-to-Speech** | edge-tts (`en-US-AriaNeural`) | Free Microsoft Neural TTS, natural voice |
-| **3D Avatar** | TalkingHead.js + Ready Player Me | Free, real-time lip-sync via Three.js WebGL |
+| **Avatar** | Lottie React | Lightweight, dynamic 2D animations for speaking/idle states |
 | **Observability** | SQLite + local artifact files | Zero-dependency, queryable, git-safe |
 | **Testing (Backend)** | pytest | Python standard for testing |
 | **Testing (Frontend)** | Vitest | Fast, Vite-native testing |
@@ -573,7 +573,7 @@ ConversAI V1 is a **modular monolith** where:
    - Visual Engine: Narration → AI-generated cinematic images (Gemini prompts + Pollinations.ai)
    - Voice & Avatar Engine: Narration → Neural audio (edge-tts) + Avatar metadata
    - Aggregation Engine: Assets → Unified multimodal output
-3. **Frontend Digital Human**: TalkingHead.js 3D avatar with real-time lip-sync in the browser
+3. **Frontend Digital Human**: Dynamic Lottie-based avatar with distinct speaking and idle animations in the browser
 4. **No databases, no authentication, no microservices** (V1 scope constraints)
 5. **Entirely free tools** throughout the stack — zero API costs
 6. **Clear interfaces** enable future extensibility without architectural rewrites

@@ -1,10 +1,10 @@
 # ConversAI
 
-ConversAI is a multimodal AI platform that transforms text into a **Digital Human experience** featuring AI-generated cinematic visuals, neural voice narration, and a real-time 3D lip-synced avatar.
+ConversAI is a multimodal AI platform that transforms text into an **educational experience** featuring AI-generated cinematic visuals, neural voice narration, and a dynamic Lottie-based avatar.
 
 ## 🌟 Key Features
 
-- **Digital Human Avatar**: 3D talking head with real-time lip-sync (`TalkingHead.js` + `Ready Player Me`).
+- **Lottie Avatar**: Dynamic 2D Lottie animations with distinct states for speaking and idle.
 - **Cinematic AI Visuals**: Automatically planned and generated images via `Pollinations.ai` (16:9 aspect ratio).
 - **Neural Voice Narration**: High-quality TTS powered by `gTTS` / `edge-tts`.
 - **Advanced Observability**: Fully instrumented backend pipeline with SQLite telemetry and hybrid artifact storage.

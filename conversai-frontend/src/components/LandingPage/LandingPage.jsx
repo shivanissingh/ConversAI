@@ -239,7 +239,7 @@ function LandingPage({ onGetStarted }) {
                         {[
                             'React + Vite', 'Python FastAPI', 'Google Gemini',
                             'Microsoft Neural TTS', 'Pollinations.ai', 'Framer Motion',
-                            'TalkingHead.js', 'WebSpeech API', 'SQLite'
+                            'Lottie', 'WebSpeech API', 'SQLite'
                         ].map((tech, i) => (
                             <motion.span
                                 key={i}
@@ -281,7 +281,7 @@ function LandingPage({ onGetStarted }) {
                 <div className="landing__footer-content">
                     <span className="landing__footer-brand">ConversAI</span>
                     <span className="landing__footer-meta">
-                        BE Major Project — Atharva College of Engineering, Mumbai
+                        Developed by SIDEV - Shivani & Ishaan
                     </span>
                     <span className="landing__footer-year">© 2026</span>
                 </div>

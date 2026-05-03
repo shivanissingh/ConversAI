@@ -3,10 +3,10 @@
 # ConversAI V1 - Voice & Avatar Engine Design
 
 > [!IMPORTANT]
-> This design defines the **Voice & Avatar Engine** for ConversAI. The Voice & Avatar Engine transforms narration text into audio (edge-tts) and generates avatar animation metadata used by the TalkingHead.js 3D avatar on the frontend.
+> This design defines the **Voice & Avatar Engine** for ConversAI. The Voice & Avatar Engine transforms narration text into audio (edge-tts) and generates avatar animation metadata used by the Lottie-based avatar on the frontend.
 
 > [!NOTE]
-> **Implementation Update**: The original design specified gTTS and a Lottie-based 2D avatar. The **actual implementation** uses **edge-tts** (`en-US-AriaNeural` neural voice) for audio and **TalkingHead.js** with a Ready Player Me GLB model for a real-time 3D lip-synced avatar in the browser.
+> **Implementation Update**: The original design specified gTTS. The **actual implementation** uses **edge-tts** (`en-US-AriaNeural` neural voice) for audio and **Lottie-React** for a dynamic 2D avatar in the browser.
 
 ---
 
@@ -48,13 +48,13 @@ For V1, combining voice and avatar into a single engine is appropriate because:
 ```
 Good audio + avatar for ConversAI:
   ✓ Natural neural voice (Microsoft AriaNeural)
-  ✓ 3D WebGL avatar with real-time lip-sync
-  ✓ Avatar driven by actual audio ArrayBuffer
-  ✓ Gracefully degrades if TalkingHead fails (shows progress bar)
+  ✓ Dynamic Lottie-based avatar with distinct speaking/idle states
+  ✓ Avatar synchronized with actual audio playback
+  ✓ Gracefully degrades if Lottie fails (shows progress bar)
   
 Bad audio + avatar for ConversAI:
   ✗ Robotic TTS voice (avoid gTTS monotone)
-  ✗ 2D CSS-animated avatars (no lip-sync)
+  ✗ Unsynced CSS-animated avatars
   ✗ Avatar dependency blocking audio playback
   ✗ Complex video generation (too slow)
 ```
@@ -85,7 +85,7 @@ Bad audio + avatar for ConversAI:
 
 ### 2.2 Avatar Engine (`avatar.py`)
 
-**Purpose**: Generate lightweight avatar metadata for the TalkingHead.js 3D frontend avatar.
+**Purpose**: Generate lightweight avatar metadata for the Lottie-based frontend avatar.
 
 **Responsibilities**:
 - Receive narration text and audio duration
@@ -95,16 +95,15 @@ Bad audio + avatar for ConversAI:
 - Support avatar toggle (enabled/disabled)
 
 **Frontend Avatar (DigitalHuman.jsx)**:
-- Loads TalkingHead.js (`@met4citizen/talkinghead`) from `src/vendor/talkinghead/`
-- Loads a Ready Player Me GLB model with ARKit + Oculus Viseme morph targets
-- Drives lip-sync by calling `head.speakAudio(audioArrayBuffer)` with the backend's base64 MP3
-- Shows a loading progress bar (0-100%) while the GLB model downloads
-- Falls back to an error state if TalkingHead initialization fails
+- Loads Lottie JSON files using `lottie-react`
+- Uses distinct animations for "speaking" and "idle" states
+- Transitions between states based on the backend's metadata and current audio time
+- Falls back to an error state if Lottie initialization fails
 
 **NOT Responsible For**:
-- ❌ 3D rendering (handled by TalkingHead.js in browser)
+- ❌ Video rendering
 - ❌ AI-based avatar creation
-- ❌ Lip-sync analysis (handled by TalkingHead.js internal viseme engine)
+- ❌ Lip-sync analysis
 - ❌ Frontend UI control
 - ❌ Complex character animation
 
@@ -755,15 +754,15 @@ graph TD
     VAE -->|audio base64, duration, avatar| AGG[Aggregation Engine]
     AGG -->|final output| API[API Response]
     API -->|audio base64 + avatar metadata| UI[Frontend]
-    UI -->|audio ArrayBuffer| DH[DigitalHuman.jsx]
-    DH -->|speakAudio()| TH[TalkingHead.js WebGL]
-    TH -->|3D lip-sync animation| Browser[Browser Renderer]
+    UI -->|playback state| DH[DigitalHuman.jsx]
+    DH -->|state transitions| Lottie[Lottie React]
+    Lottie -->|2D animation| Browser[Browser Renderer]
     
     style VAE fill:#51cf66,color:#fff
     style AGG fill:#ffd700,color:#333
     style UI fill:#4a90e2,color:#fff
     style DH fill:#ff6b6b,color:#fff
-    style TH fill:#7b68ee,color:#fff
+    style Lottie fill:#7b68ee,color:#fff
 ```
 
 ---
